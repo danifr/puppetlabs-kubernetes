@@ -51,8 +51,6 @@ class kubernetes::packages (
     backup => false,
   }
 
-  $kube_packages = ['kubelet', 'kubectl', 'kubeadm']
-
   if $disable_swap {
     exec { 'disable swap':
       path    => ['/usr/sbin/', '/usr/bin', '/bin', '/sbin'],
@@ -360,10 +358,19 @@ class kubernetes::packages (
   }
 
   if $create_repos and $facts['os']['family'] == 'Debian' {
-    package { $kube_packages:
+    package { 'kubeadm':
       ensure  => $kubernetes_package_version,
       require => Class['Apt::Update'],
     }
+    package { 'kubectl':
+      ensure  => $kubernetes_package_version,
+      require => Class['Apt::Update'],
+    }
+    package { 'kubelet':
+      ensure  => $kubernetes_package_version,
+      require => Class['Apt::Update'],
+    }
+
     if $pin_packages {
       file { '/etc/apt/preferences.d/kubernetes':
         mode    => '0444',
@@ -377,9 +384,16 @@ class kubernetes::packages (
       }
     }
   }else {
-    package { $kube_packages:
-      ensure => $kubernetes_package_version,
+    package { 'kubeadm':
+      ensure  => $kubernetes_package_version,
     }
+    package { 'kubectl':
+      ensure  => $kubernetes_package_version,
+    }
+    package { 'kubelet':
+      ensure  => $kubernetes_package_version,
+    }
+
     if $pin_packages {
       fail('package pinning is not implemented on this platform')
     }
